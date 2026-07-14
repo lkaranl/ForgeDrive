@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeDrive - Arquivos</title>
+    <style>
+        body {
+            background-color: #121214;
+            color: #e1e1e6;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+        }
+        header {
+            background-color: #202024;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #323238;
+        }
+        header h1 {
+            margin: 0;
+            color: #4fc3f7;
+            font-size: 1.5rem;
+        }
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .btn-logout, .btn-admin {
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .btn-logout {
+            background-color: #f75a68;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-logout:hover { background-color: #e24c5b; }
+        .btn-admin {
+            background-color: #323238;
+            color: #e1e1e6;
+        }
+        .btn-admin:hover { background-color: #41414c; }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .breadcrumbs {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            background: #202024;
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
+        }
+        .breadcrumbs a {
+            color: #4fc3f7;
+            text-decoration: none;
+        }
+        .breadcrumbs a:hover { text-decoration: underline; }
+        .upload-section {
+            background-color: #202024;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 2px dashed #323238;
+            text-align: center;
+            position: relative;
+        }
+        .upload-section.dragover {
+            border-color: #4fc3f7;
+            background-color: #29292e;
+        }
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #202024;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .file-table th, .file-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #323238;
+        }
+        .file-table th {
+            background-color: #29292e;
+            color: #8d8d99;
+            font-weight: 500;
+        }
+        .file-table tr:hover {
+            background-color: #29292e;
+        }
+        .file-table a {
+            color: #e1e1e6;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .file-table a:hover {
+            color: #4fc3f7;
+        }
+        .actions {
+            display: flex;
+            gap: 0.8rem;
+        }
+        .btn-del {
+            background: none;
+            border: none;
+            color: #f75a68;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-del:hover { text-decoration: underline; }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #121214;
+            border-radius: 4px;
+            margin-top: 1rem;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 8px;
+            background-color: #00b37e;
+            border-radius: 4px;
+            transition: width 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ForgeDrive</h1>
+        <div class="user-nav">
+            <span>Olá, <strong>{{ username }}</strong></span>
+            {% if is_admin %}
+            <a href="/admin" class="btn-admin">Admin</a>
+            {% endif %}
+            <form action="/logout" method="POST" style="margin:0;">
+                <button type="submit" class="btn-logout">Sair</button>
+            </form>
+        </div>
+    </header>
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="/files">Raiz</a>
+            {% for crumb in breadcrumbs %}
+                / <a href="/files/{{ crumb.path }}">{{ crumb.name }}</a>
+            {% endfor %}
+        </div>
+
+        {% if allow_write %}
+        <div class="upload-section" id="drop-zone">
+            <p>Arraste arquivos aqui ou selecione para enviar</p>
+            <input type="file" id="file-input" multiple style="display:none;">
+            <button onclick="document.getElementById('file-input').click()" style="padding:0.6rem 1.2rem; background:#00875f; border:none; color:#fff; border-radius:4px; font-weight:bold; cursor:pointer;">Selecionar Arquivo</button>
+            <div class="progress-bar-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <table class="file-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tamanho</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if !current_dir_is_root %}
+                <tr>
+                    <td colspan="3">
+                        <a href="/files/{{ parent_path }}">📁 .. (Voltar)</a>
+                    </td>
+                </tr>
+                {% endif %}
+                {% for item in items %}
+                <tr>
+                    <td>
+                        {% if item.is_dir %}
+                        <a href="/files/{{ item.relative_path }}">📁 {{ item.name }}/</a>
+                        {% else %}
+                        <a href="/download/{{ item.relative_path }}">📄 {{ item.name }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.size }}</td>
+                    <td class="actions">
+                        <a href="/download/{{ item.relative_path }}" style="color: #4fc3f7;">Baixar</a>
+                        {% if allow_write %}
+                        <form action="/delete/{{ item.relative_path }}" method="POST" onsubmit="return confirm('Deseja excluir este item?');">
+                            <button type="submit" class="btn-del">Excluir</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                uploadFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', () => {
+                uploadFiles(fileInput.files);
+            });
+        }
+
+        function uploadFiles(files) {
+            if (files.length === 0) return;
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
+            const xhr = new XMLHttpRequest();
+            const path = window.location.pathname.replace('/files', '');
+            xhr.open('POST', '/upload' + path, true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percent + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    window.location.reload();
+                } else {
+                    alert('Falha no upload: ' + xhr.responseText);
+                    progressContainer.style.display = 'none';
+                }
+            };
+
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>
