@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    root_path TEXT NOT NULL,
+    allow_read INTEGER NOT NULL DEFAULT 1,
+    allow_write INTEGER NOT NULL DEFAULT 0,
+    is_admin INTEGER NOT NULL DEFAULT 0
+);
