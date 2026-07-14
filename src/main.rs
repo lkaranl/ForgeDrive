@@ -1,4 +1,5 @@
 mod db;
+mod path_utils;
 
 use axum::{routing::get, Router};
 use std::net::SocketAddr;
