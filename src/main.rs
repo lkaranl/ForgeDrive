@@ -1,8 +1,12 @@
 mod db;
 mod path_utils;
 mod auth;
+mod handlers;
 
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use axum_extra::extract::cookie::Key;
 use std::net::SocketAddr;
 
@@ -48,6 +52,17 @@ async fn main() {
     
     let app = Router::new()
         .route("/health", get(|| async { "OK" }))
+        .route("/login", get(handlers::login_get).post(handlers::login_post))
+        .route("/logout", post(handlers::logout_post))
+        .route("/files", get(handlers::list_files))
+        .route("/files/*path", get(handlers::list_files))
+        .route("/download/*path", get(handlers::download_file))
+        .route("/upload", post(handlers::upload_file))
+        .route("/upload/*path", post(handlers::upload_file))
+        .route("/delete/*path", post(handlers::delete_file))
+        .route("/admin", get(handlers::admin_panel))
+        .route("/admin/users", post(handlers::create_user))
+        .route("/admin/users/:id/delete", post(handlers::delete_user))
         .with_state(state);
 
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
