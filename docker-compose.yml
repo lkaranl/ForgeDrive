@@ -1,8 +1,6 @@
 services:
   forgedrive:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: forgedrive:latest
     container_name: forgedrive
     restart: unless-stopped
     ports:
