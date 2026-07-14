@@ -1,0 +1,20 @@
+[package]
+name = "forgedrive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7.5", features = ["multipart"] }
+axum-extra = { version = "0.9.2", features = ["cookie", "cookie-private"] }
+tokio = { version = "1.38.0", features = ["full"] }
+tokio-util = { version = "0.7.11", features = ["io"] }
+sqlx = { version = "0.7.4", features = ["runtime-tokio-rustls", "sqlite", "macros"] }
+askama = { version = "0.12.1", features = ["with-axum"] }
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.120"
+bcrypt = "0.15.1"
+tower-http = { version = "0.5.2", features = ["fs", "trace", "limit"] }
+http-body-util = "0.1.2"
+dotenvy = "0.15.7"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
