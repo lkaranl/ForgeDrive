@@ -1,0 +1,19 @@
+services:
+  forgedrive:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: forgedrive
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_URL=sqlite:/app/db/forgedrive.db
+      - SESSION_KEY=${SESSION_KEY}
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-admin123}
+      - SHARE_DIR=/data
+    volumes:
+      - ${SHARE_DIR:-./shared_files}:/data
+      - ./db:/app/db
